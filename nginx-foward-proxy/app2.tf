@@ -1,0 +1,26 @@
+resource "azurerm_container_app" "app2" {
+  name                         = "app2"
+  resource_group_name          = azurerm_resource_group.rg.name
+  container_app_environment_id = azurerm_container_app_environment.env.id
+
+  revision_mode = "Single"
+
+  ingress {
+    external_enabled = false
+    target_port      = 80
+
+    traffic_weight {
+      percentage       = 100
+      latest_revision  = true
+    }
+  }
+
+  template {
+    container {
+      name   = "app2"
+      image  = "mcr.microsoft.com/azuredocs/aci-helloworld"
+      cpu    = 0.5
+      memory = "1Gi"
+    }
+  }
+}

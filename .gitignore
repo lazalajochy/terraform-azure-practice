@@ -30,7 +30,7 @@ override.tf.json
 # CLI local config
 .terraformrc
 terraform.rc
-
+.terraform.lock.hcl
 # Provider plugins (local cache)
 .terraform.d/plugin-cache/
 
