@@ -10,17 +10,20 @@ resource "azurerm_container_app" "app1" {
     target_port      = 80
 
     traffic_weight {
-      percentage       = 100
-      latest_revision  = true
+      percentage      = 100
+      latest_revision = true
     }
   }
 
   template {
     container {
       name   = "app1"
-      image  = "mcr.microsoft.com/azuredocs/aci-helloworld"
+      image  = "nginx:latest"
       cpu    = 0.5
       memory = "1Gi"
+      
     }
   }
 }
+
+# https://app1.wonderfulsand-18e38eca.eastus.azurecontainerapps.io/

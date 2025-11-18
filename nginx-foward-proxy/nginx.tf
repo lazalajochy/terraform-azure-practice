@@ -16,6 +16,12 @@ resource "azurerm_container_app" "nginx" {
     }
   }
 
+  tags = {
+        name = "latest"
+      
+      }
+  
+
   template {
     container {
       name   = "nginx"
@@ -25,8 +31,10 @@ resource "azurerm_container_app" "nginx" {
 
       volume_mounts {
         name = "conf"
-        path = "/etc/nginx"
+        path = "/etc/nginx.conf"
       }
+
+      
     }
 
     volume {
