@@ -6,7 +6,7 @@ resource "azurerm_container_app" "app1" {
   revision_mode = "Single"
 
   ingress {
-    external_enabled = false
+    external_enabled = true
     target_port      = 80
 
     traffic_weight {
@@ -18,10 +18,10 @@ resource "azurerm_container_app" "app1" {
   template {
     container {
       name   = "app1"
-      image  = "nginx:latest"
+      image  = "bitnami/nginx:latest"
       cpu    = 0.5
       memory = "1Gi"
-      
+
     }
   }
 }

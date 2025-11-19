@@ -8,38 +8,37 @@ resource "azurerm_container_app" "nginx" {
   ingress {
     external_enabled = true
     target_port      = 80
-    
+
     traffic_weight {
       percentage      = 100
-      # FIX: Specify that 100% of traffic goes to the current/latest revision.
-      latest_revision = true 
+      latest_revision = true
     }
   }
 
   tags = {
-        name = "latest"
-      
-      }
-  
+    name    = "latest"
+    env     = "production"
+    app     = "nginx"
+    version = "1.0.0"
+  }
 
   template {
     container {
       name   = "nginx"
-      image  = "nginx:latest"
+      image  = "${azurerm_container_registry.acr.login_server}/test-nginx:latest"
       cpu    = 0.5
       memory = "1Gi"
-
-      volume_mounts {
-        name = "conf"
-        path = "/etc/nginx.conf"
-      }
-
-      
     }
+  }
 
-    volume {
-      name         = "conf"
-      storage_type = "EmptyDir"
-    }
+  registry {
+    server               = azurerm_container_registry.acr.login_server
+    username             = azurerm_container_registry.acr.admin_username
+    password_secret_name = "acr-pull-secret"
+  }
+
+  secret {
+    name  = "acr-pull-secret"
+    value = azurerm_container_registry.acr.admin_password
   }
 }
