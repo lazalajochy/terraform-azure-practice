@@ -1,0 +1,110 @@
+# Docker
+
+# Build and push an image to Azure Container Registry
+
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+- main
+
+resources:
+- repo: self
+
+variables:
+  # Container registry service connection established during pipeline creation
+  dockerRegistryServiceConnection: '3f433180-550c-44df-a1ef-d1ecc025cb52'
+  imageRepository: 'rollingupdatestrategy'
+  containerRegistry: 'rollingupdateregistry.azurecr.io'
+  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
+  azureServiceConnection: 'azure resource manager'
+  tag: '$(Build.BuildId)'
+  
+  # Container App configuration
+  containerAppName: 'react-rolling'
+  resourceGroupName: 'rg-react-rolling'
+
+  # Agent VM image name
+  vmImageName: 'ubuntu-latest'
+
+stages:
+- stage: Build
+  displayName: Build and push stage
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        command: buildAndPush
+        repository: $(imageRepository)
+        dockerfile: $(dockerfilePath)
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(tag)
+          latest
+
+- stage: Deploy
+  displayName: Rolling update deployment
+  dependsOn: Build
+  jobs:
+  - job: Deploy
+    displayName: Update Container App (rolling update)
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: AzureCLI@2
+      displayName: 'Rolling update - Update Container App image'
+      inputs:
+        azureSubscription: '$(azureServiceConnection)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "Starting rolling update for Container App: $(containerAppName)"
+          echo "New image: $(containerRegistry)/$(imageRepository):$(tag)"
+          
+          # Mostrar la suscripción actual (la que usa la service connection)
+          echo "Current subscription:"
+          az account show --query "{Name:name, SubscriptionId:id}" --output table
+          
+          # Actualizar la Container App con la nueva imagen
+          # Esto creará automáticamente una nueva revisión si revision_mode = "Multiple"
+          az containerapp update \
+            --name $(containerAppName) \
+            --resource-group $(resourceGroupName) \
+            --image $(containerRegistry)/$(imageRepository):$(tag) \
+            --query "{name:name, provisioningState:properties.provisioningState}" \
+            --output table
+          
+          echo "Rolling update initiated successfully!"
+          
+          # Mostrar información de las revisiones
+          echo ""
+          echo "Current revisions:"
+          az containerapp revision list \
+            --name $(containerAppName) \
+            --resource-group $(resourceGroupName) \
+            --query "[].{Name:name, Active:properties.active, TrafficWeight:properties.trafficWeight, CreatedTime:properties.createdTime}" \
+            --output table
+          
+          # Esperar a que la nueva revisión esté lista
+          echo ""
+          echo "Waiting for new revision to be ready..."
+          sleep 10
+          
+          # Verificar estado de la nueva revisión
+          LATEST_REVISION=$(az containerapp revision list \
+            --name $(containerAppName) \
+            --resource-group $(resourceGroupName) \
+            --query "[0].name" -o tsv)
+          
+          echo "Latest revision: $LATEST_REVISION"
+          
+          az containerapp revision show \
+            --name $(containerAppName) \
+            --resource-group $(resourceGroupName) \
+            --revision $LATEST_REVISION \
+            --query "{Name:name, Active:properties.active, TrafficWeight:properties.trafficWeight, HealthState:properties.healthState, RunningState:properties.runningState}" \
+            --output table
