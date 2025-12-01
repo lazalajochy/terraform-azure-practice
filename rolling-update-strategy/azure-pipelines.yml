@@ -16,7 +16,7 @@ variables:
   imageRepository: 'rollingupdatestrategy'
   containerRegistry: 'rollingupdateregistry.azurecr.io'
   dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
-  azureServiceConnection: 'azure resource manager'
+  azureServiceConnection: 'rollingupdate'
   tag: '$(Build.BuildId)'
   
   # Container App configuration
@@ -64,10 +64,6 @@ stages:
         inlineScript: |
           echo "Starting rolling update for Container App: $(containerAppName)"
           echo "New image: $(containerRegistry)/$(imageRepository):$(tag)"
-          
-          # Mostrar la suscripción actual (la que usa la service connection)
-          echo "Current subscription:"
-          az account show --query "{Name:name, SubscriptionId:id}" --output table
           
           # Actualizar la Container App con la nueva imagen
           # Esto creará automáticamente una nueva revisión si revision_mode = "Multiple"
