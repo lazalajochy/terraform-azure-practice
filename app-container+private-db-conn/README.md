@@ -2,6 +2,12 @@
 
 Este proyecto de Terraform despliega una infraestructura en Azure que permite que una Container App (SonarQube) se comunique con una base de datos PostgreSQL Flexible Server a través de una red privada, sin exposición a Internet.
 
+
+<img width="1536" height="1024" alt="ChatGPT Image Dec 7, 2025, 09_49_07 AM" src="https://github.com/user-attachments/assets/ddfd2213-6f1e-4bf0-9097-a2d5a2857fde" />
+
+
+
+
 ## 📋 Tabla de Contenidos
 
 - [Arquitectura General](#arquitectura-general)
